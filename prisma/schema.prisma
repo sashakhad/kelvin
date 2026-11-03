@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model KelvinPreorder {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  contactName       String
+  email             String
+  organization      String?
+  city              String?
+  absoluteZeroRazz  Int
+  minusFortyMango   Int
+  punch27315        Int
+  freezingPointLime Int
+  note              String?
+  ipHash            String
+  userAgent         String?
+
+  @@index([ipHash, createdAt])
+  @@index([email])
+}
