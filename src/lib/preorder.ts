@@ -56,12 +56,41 @@ export type SubmitDeps = {
   salt: string | undefined;
   now: Date;
   userAgent: string | null;
+  /** When false, the filing is a waitlist shout and nothing is written. */
+  persist: boolean;
   countRecent: (ipHash: string, since: Date) => Promise<number>;
   create: (row: NewPreorder) => Promise<void>;
 };
 
+export type IntakeReceipt = {
+  headline: string;
+  detail: string;
+};
+
 export type SubmitResult =
-  { ok: true; status: 200 } | { ok: false; status: 400 | 429 | 500; error: string };
+  | ({ ok: true; status: 200; stored: boolean } & IntakeReceipt)
+  | { ok: false; status: 400 | 429; error: string };
+
+export function intakeReceipt(totalCases: number, stored: boolean): IntakeReceipt {
+  const count = Number.isFinite(totalCases) ? Math.max(0, Math.trunc(totalCases)) : 0;
+  const boxes = count === 1 ? '1 box' : `${count} boxes`;
+  const math = '0 °C of payment is 273.15 K is 32 °F.';
+  const headline = 'Converted. Not charged.';
+  const detail = stored
+    ? `Only at Shrimp Club. ${boxes} made it into the optional ledger. ${math} Nothing was charged. No email was sent.`
+    : `Only at Shrimp Club. ${boxes} picked up 273.15 and lost a bill. ${math} Kelvin does not keep the list. The club does. Nothing was charged. No email was sent.`;
+
+  return { headline, detail };
+}
+
+function caseTotal(data: {
+  absoluteZeroRazz: number;
+  minusFortyMango: number;
+  punch27315: number;
+  freezingPointLime: number;
+}): number {
+  return data.absoluteZeroRazz + data.minusFortyMango + data.punch27315 + data.freezingPointLime;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -81,7 +110,7 @@ export async function submitPreorder(payload: unknown, deps: SubmitDeps): Promis
     typeof payload.companyWebsite === 'string' &&
     payload.companyWebsite.trim() !== ''
   ) {
-    return { ok: true, status: 200 };
+    return { ok: true, status: 200, stored: false, ...intakeReceipt(0, false) };
   }
 
   const parsed = preorderSchema.safeParse(payload);
@@ -94,39 +123,41 @@ export async function submitPreorder(payload: unknown, deps: SubmitDeps): Promis
     };
   }
 
-  if (!deps.salt) {
-    return {
-      ok: false,
-      status: 500,
-      error: 'The lab is not taking boxes yet. Nothing was charged.',
-    };
+  const total = caseTotal(parsed.data);
+  if (!deps.persist || !deps.salt) {
+    return { ok: true, status: 200, stored: false, ...intakeReceipt(total, false) };
   }
 
-  const ipHash = hashIp(deps.ip, deps.salt);
-  const recent = await deps.countRecent(ipHash, windowStart(deps.now));
-  if (isOverLimit(recent)) {
-    return {
-      ok: false,
-      status: 429,
-      error: 'Too many filings from this connection. Wait an hour and convert again.',
-    };
+  try {
+    const ipHash = hashIp(deps.ip, deps.salt);
+    const recent = await deps.countRecent(ipHash, windowStart(deps.now));
+    if (isOverLimit(recent)) {
+      return {
+        ok: false,
+        status: 429,
+        error: 'Too many filings from this connection. Wait an hour and convert again.',
+      };
+    }
+
+    await deps.create({
+      contactName: parsed.data.contactName,
+      email: parsed.data.email.toLowerCase(),
+      organization: blankToNull(parsed.data.organization),
+      city: blankToNull(parsed.data.city),
+      absoluteZeroRazz: parsed.data.absoluteZeroRazz,
+      minusFortyMango: parsed.data.minusFortyMango,
+      punch27315: parsed.data.punch27315,
+      freezingPointLime: parsed.data.freezingPointLime,
+      note: blankToNull(parsed.data.note),
+      ipHash,
+      userAgent: deps.userAgent,
+    });
+  } catch {
+    console.error('Pre-order persist skipped');
+    return { ok: true, status: 200, stored: false, ...intakeReceipt(total, false) };
   }
 
-  await deps.create({
-    contactName: parsed.data.contactName,
-    email: parsed.data.email.toLowerCase(),
-    organization: blankToNull(parsed.data.organization),
-    city: blankToNull(parsed.data.city),
-    absoluteZeroRazz: parsed.data.absoluteZeroRazz,
-    minusFortyMango: parsed.data.minusFortyMango,
-    punch27315: parsed.data.punch27315,
-    freezingPointLime: parsed.data.freezingPointLime,
-    note: blankToNull(parsed.data.note),
-    ipHash,
-    userAgent: deps.userAgent,
-  });
-
-  return { ok: true, status: 200 };
+  return { ok: true, status: 200, stored: true, ...intakeReceipt(total, true) };
 }
 
 export const PREORDER_FIELD_NAMES = [

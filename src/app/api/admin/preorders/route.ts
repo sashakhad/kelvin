@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 
 import { preordersToCsv } from '@/lib/csv';
+import { isDatabaseConfigured } from '@/lib/database';
 import { tokensMatch } from '@/lib/ip';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
+
+const notConfigured = { ok: false, error: 'not configured' } as const;
 
 function bearerToken(request: Request): string | null {
   const header = request.headers.get('authorization');
@@ -15,8 +18,12 @@ function bearerToken(request: Request): string | null {
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json(notConfigured, { status: 503 });
+  }
+
   if (!tokensMatch(bearerToken(request), process.env.ADMIN_TOKEN)) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -32,8 +39,8 @@ export async function GET(request: Request): Promise<NextResponse> {
         'Cache-Control': 'no-store',
       },
     });
-  } catch (error) {
-    console.error('Pre-order export failed', error);
-    return new NextResponse('Export failed', { status: 500 });
+  } catch {
+    console.error('Pre-order export failed');
+    return NextResponse.json(notConfigured, { status: 503 });
   }
 }

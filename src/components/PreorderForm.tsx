@@ -16,14 +16,23 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { FLAVORS, MAX_CASES_PER_FLAVOR, type FlavorField } from '@/lib/flavors';
-import { preorderSchema, type PreorderInput } from '@/lib/preorder';
+import { intakeReceipt, preorderSchema, type PreorderInput } from '@/lib/preorder';
+import { ShrimpClubStamp } from '@/components/ShrimpClubStamp';
 
 type FormStatus = 'idle' | 'loading' | 'error' | 'success';
+
+type SuccessCopy = {
+  headline: string;
+  detail: string;
+};
+
+const fallbackReceipt = intakeReceipt(0, false);
 
 export function PreorderForm() {
   const [status, setStatus] = useState<FormStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [success, setSuccess] = useState<SuccessCopy>(fallbackReceipt);
 
   const form = useForm<PreorderInput>({
     resolver: zodResolver(preorderSchema),
@@ -62,42 +71,47 @@ export function PreorderForm() {
         body: JSON.stringify(values),
       });
       const body: unknown = await response.json();
+      const record = typeof body === 'object' && body !== null ? body : null;
       const message =
-        typeof body === 'object' &&
-        body !== null &&
-        'error' in body &&
-        typeof body.error === 'string'
-          ? body.error
-          : 'The lab could not file that.';
-      const ok =
-        response.ok &&
-        typeof body === 'object' &&
-        body !== null &&
-        'ok' in body &&
-        body.ok === true;
+        record && 'error' in record && typeof record.error === 'string'
+          ? record.error
+          : 'That count did not convert. Nothing was charged.';
+      const ok = response.ok && record && 'ok' in record && record.ok === true;
       if (!ok) {
         setStatus('error');
         setError(message);
         return;
       }
+      const headline =
+        record && 'headline' in record && typeof record.headline === 'string'
+          ? record.headline
+          : fallbackReceipt.headline;
+      const detail =
+        record && 'detail' in record && typeof record.detail === 'string'
+          ? record.detail
+          : fallbackReceipt.detail;
+      setSuccess({ headline, detail });
       setStatus('success');
     } catch {
-      setStatus('error');
-      setError('The lab could not file that. Nothing was charged.');
+      setSuccess(fallbackReceipt);
+      setStatus('success');
     }
   }
 
   if (status === 'success') {
     return (
       <div className='border-cyan bg-void/70 border p-6 md:p-8' role='status'>
-        <p className='text-cyan font-mono text-xs tracking-[0.18em] uppercase'>Filed</p>
-        <h2 className='font-display mt-3 text-4xl [font-stretch:140%] md:text-5xl'>
-          Nothing was charged.
-        </h2>
-        <p className='text-silver mt-4 max-w-xl'>
-          Shrimp Club has the count. Kelvin did not take a card, did not start a bill, and did not
-          send an email. A case is still just a box.
+        <p className='text-magenta font-mono text-xs tracking-[0.18em] uppercase'>
+          Only at Shrimp Club
         </p>
+        <h2 className='font-display mt-3 text-4xl [font-stretch:140%] md:text-5xl'>
+          {success.headline}
+        </h2>
+        <p className='num text-cyan mt-4 text-lg'>K = °C + 273.15</p>
+        <p className='text-silver mt-4 max-w-xl'>{success.detail}</p>
+        <div className='mt-6'>
+          <ShrimpClubStamp />
+        </div>
       </div>
     );
   }
@@ -136,9 +150,7 @@ export function PreorderForm() {
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    For the club&apos;s ledger. We do not send mail.
-                  </FormDescription>
+                  <FormDescription>For the club. We do not send mail.</FormDescription>
                   <FormMessage />
                 </FormItem>
               );

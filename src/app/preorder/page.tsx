@@ -30,7 +30,10 @@ export default function PreorderPage() {
             <li>
               Four flavors. Freezing Point Lime and 273.15 Punch share a temperature on purpose.
             </li>
-            <li>Filings land in the lab ledger. There is no receipt in your inbox.</li>
+            <li>
+              Only at Shrimp Club. This is a waitlist shout, not a bill, and nothing lands in your
+              inbox.
+            </li>
           </ul>
           <div className='mt-8'>
             <ShrimpClubStamp />

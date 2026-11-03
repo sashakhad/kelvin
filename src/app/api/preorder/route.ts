@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
+import { isDatabaseConfigured } from '@/lib/database';
 import { clientIpFromHeaders } from '@/lib/ip';
-import { submitPreorder } from '@/lib/preorder';
+import { intakeReceipt, submitPreorder } from '@/lib/preorder';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +19,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     request.headers.get('x-forwarded-for'),
     request.headers.get('x-real-ip')
   );
+  const persist = isDatabaseConfigured();
 
   try {
     const result = await submitPreorder(payload, {
@@ -25,6 +27,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       salt: process.env.IP_HASH_SALT,
       now: new Date(),
       userAgent: request.headers.get('user-agent'),
+      persist,
       async countRecent(ipHash, since) {
         return prisma.kelvinPreorder.count({
           where: {
@@ -42,12 +45,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: false, error: result.error }, { status: result.status });
     }
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error('Pre-order filing failed', error);
-    return NextResponse.json(
-      { ok: false, error: 'The lab could not file that. Nothing was charged.' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      ok: true,
+      stored: result.stored,
+      headline: result.headline,
+      detail: result.detail,
+    });
+  } catch {
+    console.error('Pre-order filing failed');
+    const receipt = intakeReceipt(0, false);
+    return NextResponse.json({ ok: true, stored: false, ...receipt });
   }
 }
