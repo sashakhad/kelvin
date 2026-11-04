@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { flavorReadings } from '../flavors';
+import { FLAVORS, flavorReadings } from '../flavors';
 
 describe('flavor readings', () => {
   it('keeps every flavor on the conversion formulas', () => {
@@ -29,5 +32,13 @@ describe('flavor readings', () => {
       F: '32',
       sameReadingAs: '273.15 Punch',
     });
+  });
+
+  it('points every flavor at its public can image', () => {
+    for (const flavor of FLAVORS) {
+      expect(flavor.image).toBe(`/flavors/${flavor.id}.webp`);
+      const file = readFileSync(path.join(process.cwd(), 'public', flavor.image));
+      expect(file.byteLength).toBeGreaterThan(0);
+    }
   });
 });

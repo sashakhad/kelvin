@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 
@@ -208,6 +209,7 @@ export function PreorderForm() {
                   form={form}
                   name={flavor.field}
                   label={flavor.name}
+                  image={flavor.image}
                   onChanged={refreshTotal}
                 />
               );
@@ -294,10 +296,11 @@ type CaseFieldProps = {
   form: UseFormReturn<PreorderInput>;
   name: FlavorField;
   label: string;
+  image: string;
   onChanged: () => void;
 };
 
-function CaseField({ form, name, label, onChanged }: CaseFieldProps) {
+function CaseField({ form, name, label, image, onChanged }: CaseFieldProps) {
   return (
     <FormField
       control={form.control}
@@ -314,50 +317,60 @@ function CaseField({ form, name, label, onChanged }: CaseFieldProps) {
         return (
           <FormItem className='border-silver/25 border p-4'>
             <FormLabel>{label}</FormLabel>
-            <div className='flex items-center gap-2'>
-              <button
-                type='button'
-                className='border-silver/40 text-cyan size-11 border font-mono text-lg'
-                aria-label={`Remove a case of ${label}`}
-                onClick={function decrement() {
-                  setCount(current - 1);
-                }}
-              >
-                −
-              </button>
-              <FormControl>
-                <Input
-                  type='number'
-                  inputMode='numeric'
-                  min={0}
-                  max={MAX_CASES_PER_FLAVOR}
-                  className='num text-center text-lg'
-                  name={field.name}
-                  ref={field.ref}
-                  onBlur={field.onBlur}
-                  value={current}
-                  onChange={function onCount(event) {
-                    if (event.target.value === '') {
-                      field.onChange(0);
-                      return;
-                    }
-                    const next = Number(event.target.value);
-                    if (Number.isFinite(next)) {
-                      setCount(Math.trunc(next));
-                    }
+            <div className='flex items-center gap-3'>
+              <Image
+                src={image}
+                alt={`Kelvin ${label} can`}
+                width={864}
+                height={1152}
+                sizes='48px'
+                className='aspect-[3/4] h-16 w-12 shrink-0 object-cover'
+              />
+              <div className='flex min-w-0 flex-1 items-center gap-2'>
+                <button
+                  type='button'
+                  className='border-silver/40 text-cyan size-11 border font-mono text-lg'
+                  aria-label={`Remove a case of ${label}`}
+                  onClick={function decrement() {
+                    setCount(current - 1);
                   }}
-                />
-              </FormControl>
-              <button
-                type='button'
-                className='border-silver/40 text-cyan size-11 border font-mono text-lg'
-                aria-label={`Add a case of ${label}`}
-                onClick={function increment() {
-                  setCount(current + 1);
-                }}
-              >
-                +
-              </button>
+                >
+                  −
+                </button>
+                <FormControl>
+                  <Input
+                    type='number'
+                    inputMode='numeric'
+                    min={0}
+                    max={MAX_CASES_PER_FLAVOR}
+                    className='num text-center text-lg'
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={current}
+                    onChange={function onCount(event) {
+                      if (event.target.value === '') {
+                        field.onChange(0);
+                        return;
+                      }
+                      const next = Number(event.target.value);
+                      if (Number.isFinite(next)) {
+                        setCount(Math.trunc(next));
+                      }
+                    }}
+                  />
+                </FormControl>
+                <button
+                  type='button'
+                  className='border-silver/40 text-cyan size-11 border font-mono text-lg'
+                  aria-label={`Add a case of ${label}`}
+                  onClick={function increment() {
+                    setCount(current + 1);
+                  }}
+                >
+                  +
+                </button>
+              </div>
             </div>
             <FormMessage />
           </FormItem>

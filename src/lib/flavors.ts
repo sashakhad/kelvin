@@ -12,9 +12,25 @@ export type Flavor = {
   scale: Scale;
   line: string;
   sameReadingAs: string | null;
+  image: string;
 };
 
-export const FLAVORS: readonly Flavor[] = [
+function flavorCanImage(id: string): string {
+  return `/flavors/${id}.webp`;
+}
+
+function attachCanImages(definitions: readonly Omit<Flavor, 'image'>[]): Flavor[] {
+  const flavors: Flavor[] = [];
+  for (const flavor of definitions) {
+    flavors.push({
+      ...flavor,
+      image: flavorCanImage(flavor.id),
+    });
+  }
+  return flavors;
+}
+
+const FLAVOR_DEFINITIONS: readonly Omit<Flavor, 'image'>[] = [
   {
     id: 'absolute-zero-razz',
     field: 'absoluteZeroRazz',
@@ -56,6 +72,8 @@ export const FLAVORS: readonly Flavor[] = [
     sameReadingAs: '273.15 Punch',
   },
 ];
+
+export const FLAVORS: readonly Flavor[] = attachCanImages(FLAVOR_DEFINITIONS);
 
 export type FlavorReading = Flavor & {
   K: string;
