@@ -35,7 +35,7 @@ const POSTERS = [
     src: '/campaign/louie-chugging.webp',
     width: 1152,
     height: 864,
-    alt: 'King Louie with frost on his face as a Kelvin can sprays. The line reads Chug to 0 K.',
+    alt: 'King Louie taking a cool sip of Kelvin. The line reads Chug to 0 K.',
     caption: 'Chug to 0 K.',
   },
   {
