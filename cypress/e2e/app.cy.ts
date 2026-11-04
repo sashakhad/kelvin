@@ -34,17 +34,6 @@ describe('Kelvin', () => {
     cy.contains('Name the human placing the boxes').should('be.visible');
   });
 
-  it('shows the brand system', () => {
-    cy.visit('/brand');
-
-    cy.contains('h1', 'Celsius + 273.15.').should('be.visible');
-    cy.contains('Celsius, but converted.').should('be.visible');
-    cy.contains('#00F0FF').should('be.visible');
-    cy.contains('#FF2E97').should('be.visible');
-    cy.get('img[alt="KELVIN lockup"]').should('be.visible');
-    cy.get('img[alt="+273.15 tab"]').should('be.visible');
-  });
-
   it('opens the menu on a phone', () => {
     cy.viewport(390, 844);
     cy.visit('/');

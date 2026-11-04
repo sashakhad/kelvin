@@ -11,7 +11,6 @@ const LINKS = [
   { href: '/#converter', label: 'The math' },
   { href: '/#flavors', label: 'Flavors' },
   { href: '/preorder', label: 'Pre-order' },
-  { href: '/brand', label: 'Brand' },
 ] as const;
 
 export function SiteHeader() {

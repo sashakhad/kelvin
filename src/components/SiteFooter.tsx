@@ -45,11 +45,6 @@ export function SiteFooter() {
                   Pre-order
                 </Link>
               </li>
-              <li>
-                <Link href='/brand' className='hover:text-cyan'>
-                  Brand
-                </Link>
-              </li>
             </ul>
           </div>
           <div className='space-y-3'>

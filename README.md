@@ -44,7 +44,6 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" http://localhost:3000/api/admin/pre
 
 - `/` — landing page, converter, Conversion Facts label, flavors
 - `/preorder` — bulk waitlist. No payment and no card fields. Works with no database.
-- `/brand` — logo variants, palette, type, voice, taglines
 - `POST /api/preorder` — accepts the waitlist. Stores a `KelvinPreorder` row only when `DATABASE_URL` is set.
 - `GET /api/admin/preorders` — CSV download, or `503` JSON `{ "ok": false, "error": "not configured" }` when no database is configured.
 
