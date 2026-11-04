@@ -8,8 +8,8 @@
   "packageManager": "pnpm@11.13.1",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
-    "vercel-build": "sh -c 'if [ -n \"$DATABASE_URL\" ]; then prisma migrate deploy; fi && next build'",
+    "build": "prisma generate && next build",
+    "vercel-build": "sh -c 'if [ -n \"$DATABASE_URL\" ]; then prisma migrate deploy; fi && pnpm run build'",
     "start": "next start -p 3000",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
